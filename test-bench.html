@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceFlow AI 2.0 — Hands-Free Voice Navigation & Form-Filling Workbench</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --border: #e2e8f0;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --accent: #06b6d4;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #090d16;
+        --card-bg: #0f172a;
+        --text: #f8fafc;
+        --border: #1e293b;
+        --primary: #10b981;
+        --primary-hover: #059669;
+        --accent: #06b6d4;
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 30px 20px 60px 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 960px;
+      width: 100%;
+    }
+    header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    p.subtitle {
+      margin: 0;
+      color: #64748b;
+      font-size: 14px;
+    }
+    .guide-banner {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .guide-banner strong {
+      color: var(--primary);
+    }
+    .workflow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .step-item {
+      background: rgba(255, 255, 255, 0.5);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      font-size: 12px;
+    }
+    @media (prefers-color-scheme: dark) {
+      .step-item {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    /* Live Workbench HUD Bar */
+    .hud-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 18px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .hud-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .hud-label {
+      color: #64748b;
+      font-weight: 500;
+    }
+    .hud-val {
+      font-weight: 700;
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .hud-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Form Layout */
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 24px 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+      margin-bottom: 20px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: inherit;
+    }
+    .hint {
+      font-size: 11px;
+      color: #64748b;
+    }
+    input[type="text"], input[type="email"], input[type="tel"], textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: inherit;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    .contenteditable-box {
+      min-height: 90px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .contenteditable-box:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Activity & Command Feed */
+    .log-box {
+      height: 120px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+    }
+    @media (prefers-color-scheme: dark) {
+      .log-box {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+    .log-entry {
+      margin-bottom: 4px;
+    }
+    .log-time { color: #64748b; }
+    .log-cmd { color: #10b981; font-weight: 600; }
+    .log-action { color: inherit; }
+
+    /* Cross-App Simulation Cards */
+    .sim-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+    .badge-direct { background: #dcfce7; color: #166534; }
+    .badge-fallback { background: #fef3c7; color: #92400e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>VoiceFlow AI 2.0 Form-Filling Workbench</h1>
+      <p class="subtitle">Full Voice-Only Navigation, Field Identification, Dictation, Undo, & Form-Filling Demonstration</p>
+    </header>
+
+    <!-- Guided Voice Instructions Banner -->
+    <div class="guide-banner">
+      <strong>Hands-Free Testing Sequence:</strong> Activate voice control (<kbd>Cmd+Shift+K</kbd> or click the floating mic). You can complete this entire patient form <em>without touching your keyboard or mouse</em>!
+      <div class="workflow-steps">
+        <div class="step-item">1. Say <code>"Go to patient name"</code> &rarr; Say <code>"Rahul Sharma"</code></div>
+        <div class="step-item">2. Say <code>"Next field"</code> &rarr; Say <code>"Forty five"</code></div>
+        <div class="step-item">3. Say <code>"Next field"</code> &rarr; Say <code>"9876543210"</code></div>
+        <div class="step-item">4. Say <code>"Go to chief complaint"</code> &rarr; Say <code>"Fever and cough for three days"</code></div>
+        <div class="step-item">5. Say <code>"New paragraph"</code> &rarr; Say <code>"No known allergies"</code></div>
+        <div class="step-item">6. Say <code>"Previous field"</code> &rarr; Say <code>"Clear this field"</code> or <code>"Undo"</code></div>
+        <div class="step-item">7. Say <code>"Replace this field with twenty five"</code></div>
+        <div class="step-item">8. Say <code>"Stop voice control"</code></div>
+      </div>
+    </div>
+
+    <!-- Live Workbench HUD Bar -->
+    <div class="hud-bar">
+      <div class="hud-stat">
+        <span class="hud-label">Current Focused Field:</span>
+        <span id="hud-current-field" class="hud-val">None (Click or voice target)</span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-label">Discovered Fields:</span>
+        <span id="hud-field-count" class="hud-val">8 Fields</span>
+      </div>
+      <div class="hud-stat">
+        <span class="hud-label">Zero-Submit Guard:</span>
+        <span class="hud-val" style="color: #10b981;">Active ✓</span>
+      </div>
+      <div class="hud-actions">
+        <button id="btn-reset-form" type="button" class="btn">Reset Form</button>
+        <button id="btn-clear-log" type="button" class="btn">Clear Log</button>
+      </div>
+    </div>
+
+    <!-- 1. Hospital Patient Registration Form (Primary Specification) -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 18px; margin: 0; font-weight: 700;">1. Hospital Patient Registration & Encounter Form</h2>
+        <span class="badge badge-direct">Page Understanding + Navigation Active</span>
+      </div>
+
+      <form id="patient-form" onsubmit="event.preventDefault(); return false;">
+        <div class="form-grid">
+          <!-- Field 1: Patient Name -->
+          <div class="form-group">
+            <label for="patient-name">Patient Name *</label>
+            <input type="text" id="patient-name" name="patientName" placeholder="e.g. John Doe" autocomplete="off" />
+            <span class="hint">Target with: "Go to Patient Name"</span>
+          </div>
+
+          <!-- Field 2: Age -->
+          <div class="form-group">
+            <label for="patient-age">Age *</label>
+            <input type="text" id="patient-age" name="patientAge" placeholder="e.g. 45" autocomplete="off" />
+            <span class="hint">Target with: "Go to Age"</span>
+          </div>
+
+          <!-- Field 3: Phone Number -->
+          <div class="form-group">
+            <label for="patient-phone">Phone Number</label>
+            <input type="tel" id="patient-phone" name="patientPhone" placeholder="e.g. +1 555-0199" autocomplete="off" />
+            <span class="hint">Target with: "Go to Phone Number"</span>
+          </div>
+
+          <!-- Field 4: Email Address -->
+          <div class="form-group">
+            <label for="patient-email">Email Address</label>
+            <input type="email" id="patient-email" name="patientEmail" placeholder="e.g. patient@example.com" autocomplete="off" />
+            <span class="hint">Target with: "Go to Email"</span>
+          </div>
+
+          <!-- Field 5: Address -->
+          <div class="form-group full-width">
+            <label for="patient-address">Residential Address</label>
+            <input type="text" id="patient-address" name="patientAddress" placeholder="Street, City, State, ZIP" autocomplete="off" />
+            <span class="hint">Target with: "Go to Residential Address"</span>
+          </div>
+
+          <!-- Field 6: Chief Complaint -->
+          <div class="form-group full-width">
+            <label for="chief-complaint">Chief Complaint</label>
+            <textarea id="chief-complaint" name="chiefComplaint" rows="3" placeholder="Primary symptoms and duration..."></textarea>
+            <span class="hint">Target with: "Go to Chief Complaint"</span>
+          </div>
+
+          <!-- Field 7: Medical History -->
+          <div class="form-group full-width">
+            <label for="medical-history">Medical History</label>
+            <textarea id="medical-history" name="medicalHistory" rows="3" placeholder="Past illnesses, surgeries, chronic conditions..."></textarea>
+            <span class="hint">Target with: "Go to Medical History"</span>
+          </div>
+
+          <!-- Field 8: Multiline Clinical SOAP Notes (Contenteditable) -->
+          <div class="form-group full-width">
+            <label for="clinical-notes">Clinical Notes (Rich SOAP Format)</label>
+            <div
+              id="clinical-notes"
+              class="contenteditable-box"
+              contenteditable="true"
+              role="textbox"
+              aria-label="Clinical Notes"
+              placeholder="Subjective / Objective / Assessment / Plan (SOAP)..."
+            ></div>
+            <span class="hint">Target with: "Go to Clinical Notes" &bull; Supports "New paragraph", "Insert comma"</span>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- 2. Local Workbench Activity Log -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <h3 style="font-size: 14px; margin: 0; font-weight: 700;">2. Local Activity Log & Focus State</h3>
+        <span style="font-size: 11px; color: #64748b;">Zero External Telemetry (Stored purely in browser DOM)</span>
+      </div>
+      <div id="activity-log" class="log-box">
+        <div class="log-entry"><span class="log-time">[Ready]</span> Workbench initialized with 8 accessible form fields. Waiting for voice activation...</div>
+      </div>
+    </div>
+
+    <!-- 3. Cross-Application Compatibility Tests -->
+    <div class="section-title">
+      <span>3. Cross-Application Editor Simulator</span>
+    </div>
+
+    <div class="sim-grid">
+      <!-- WhatsApp Web Message Composer Simulation -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <span style="font-weight: 700; font-size: 14px;">WhatsApp Web Message Composer (Lexical AST)</span>
+            <div class="hint">Tests: Meta Lexical execCommand, zero-accidental-send, line breaks</div>
+          </div>
+          <span class="badge badge-direct">WhatsAppWebAdapter</span>
+        </div>
+        <footer style="background: rgba(16, 185, 129, 0.05); padding: 12px; border-radius: 10px; border: 1px solid var(--border); display: flex; align-items: flex-end; gap: 10px;">
+          <div style="flex: 1;">
+            <div
+              class="contenteditable-box"
+              contenteditable="true"
+              role="textbox"
+              data-tab="10"
+              data-lexical-editor="true"
+              id="whatsapp-compose"
+              tabindex="0"
+              style="min-height: 48px; padding: 8px 12px; background: var(--card-bg); border-radius: 8px;"
+            ><p class="selectable-text copyable-text" style="margin: 0;"><span data-lexical-text="true">Hey, checking in on the lab results</span></p></div>
+          </div>
+          <button id="wa-send-btn" type="button" style="width: 40px; height: 40px; border-radius: 50%; border: none; background: #22c55e; color: #ffffff; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;" title="Send Message">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </footer>
+        <div id="wa-send-status" style="margin-top: 8px; font-size: 11px; color: #10b981; font-weight: 600;">✓ Zero-Send Guard Active: Enter key was NOT triggered</div>
+      </div>
+
+      <!-- Google Docs & Canvas Surface Simulation -->
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <span style="font-weight: 700; font-size: 14px;">Google Docs & Office Online (Canvas Virtual Docs)</span>
+            <div class="hint">Tests: Transparent clipboard fallback with paste notification</div>
+          </div>
+          <span class="badge badge-fallback">CanvasVirtualDocsAdapter</span>
+        </div>
+        <div class="kix-appview" style="padding: 12px; border: 1px dashed var(--border); border-radius: 8px; text-align: center; background: rgba(0,0,0,0.02);">
+          <canvas id="kix-canvas" width="400" height="60" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px;"></canvas>
+          <p style="margin: 8px 0 0 0; font-size: 12px; color: #64748b;">
+            Canvas surfaces cannot be directly injected via DOM. VoiceFlow AI transparently copies text to clipboard and prompts to paste.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Local Workbench HUD & Logging Logic
+    const hudField = document.getElementById('hud-current-field');
+    const logBox = document.getElementById('activity-log');
+
+    function logEvent(action, detail) {
+      const now = new Date().toTimeString().split(' ')[0];
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.innerHTML = `<span class="log-time">[${now}]</span> <span class="log-cmd">${action}:</span> <span class="log-action">${detail}</span>`;
+      logBox.appendChild(div);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // Monitor focus changes across all inputs
+    document.addEventListener('focusin', (e) => {
+      const target = e.target;
+      if (target && target instanceof HTMLElement) {
+        let label = target.getAttribute('aria-label') || target.getAttribute('placeholder') || target.id;
+        if (target.id) {
+          const l = document.querySelector(`label[for="${target.id}"]`);
+          if (l) label = l.textContent.trim().replace(/[:*]+$/, '').trim();
+        }
+        hudField.textContent = label || target.tagName;
+        logEvent('Focus Target', `Focused field "${label || target.tagName}"`);
+      }
+    }, true);
+
+    // Form Reset
+    document.getElementById('btn-reset-form').addEventListener('click', () => {
+      document.getElementById('patient-form').reset();
+      document.getElementById('clinical-notes').innerHTML = '';
+      logEvent('Action', 'Form fields reset');
+    });
+
+    // Clear Log
+    document.getElementById('btn-clear-log').addEventListener('click', () => {
+      logBox.innerHTML = '';
+      logEvent('Log', 'Cleared activity log');
+    });
+
+    // WhatsApp Send Guard Check
+    const waEl = document.getElementById('whatsapp-compose');
+    const waStatus = document.getElementById('wa-send-status');
+    const waSendBtn = document.getElementById('wa-send-btn');
+    if (waEl) {
+      waEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          waStatus.textContent = '⚠️ Accidental Send Triggered! (Enter pressed without Shift)';
+          waStatus.style.color = '#ef4444';
+          logEvent('Warning', 'Accidental Enter key detected on WhatsApp composer');
+        }
+      });
+      waEl.addEventListener('input', () => {
+        const hasText = waEl.textContent.trim().length > 0;
+        waSendBtn.style.background = hasText ? '#22c55e' : '#94a3b8';
+      });
+    }
+  </script>
+  <script type="module" src="/src/content/content-script.ts"></script>
+</body>
+</html>
