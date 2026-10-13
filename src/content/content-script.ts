@@ -5,8 +5,17 @@ import { mountFloatingWidget } from './floating-widget';
 import { ExtensionMessage, MessageResponse } from '../shared/messages';
 import { loadSettings } from '../shared/settings';
 
-// Prevent duplicate initialization in the same frame/tab
-if (!(window as any).__VOICEFLOW_INITIALIZED__) {
+// Prevent duplicate initialization in the same frame/tab, across isolated and main worlds
+const isAlreadyActive =
+  (typeof document !== 'undefined' &&
+    (document.documentElement?.getAttribute('data-voiceflow-active') === 'true' ||
+      !!document.getElementById('voiceflow-shadow-host'))) ||
+  !!(window as any).__VOICEFLOW_INITIALIZED__;
+
+if (!isAlreadyActive) {
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.setAttribute('data-voiceflow-active', 'true');
+  }
   (window as any).__VOICEFLOW_INITIALIZED__ = true;
 
   console.log('[VoiceFlow AI] Content script initializing...');

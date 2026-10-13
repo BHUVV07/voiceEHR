@@ -10,6 +10,9 @@ import {
   Eye,
   Volume2,
   Trash2,
+  Mic,
+  Smartphone,
+  Laptop,
 } from 'lucide-react';
 import { SUPPORTED_LANGUAGES, EXTENSION_NAME } from '../shared/constants';
 import { loadSettings, saveSettings, UserSettings, DEFAULT_SETTINGS } from '../shared/settings';
@@ -19,11 +22,23 @@ export const Options: React.FC = () => {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+
   useEffect(() => {
     loadSettings().then((s) => {
       setSettings(s);
       setLoading(false);
     });
+
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.enumerateDevices) {
+      navigator.mediaDevices
+        .enumerateDevices()
+        .then((devices) => {
+          const mics = devices.filter((d) => d.kind === 'audioinput');
+          setAudioDevices(mics);
+        })
+        .catch(() => {});
+    }
   }, []);
 
   const handleChange = (field: keyof UserSettings, value: any) => {
@@ -40,6 +55,12 @@ export const Options: React.FC = () => {
   const openShortcutsConfig = () => {
     if (typeof chrome !== 'undefined' && chrome.tabs) {
       chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+    }
+  };
+
+  const openMicSettings = () => {
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      chrome.tabs.create({ url: 'chrome://settings/content/microphone' });
     }
   };
 
@@ -158,6 +179,83 @@ export const Options: React.FC = () => {
                 />
               </label>
             </div>
+          </div>
+        </div>
+
+        {/* Section: Microphone & Input Device Selection */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800/80 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
+              <Mic className="w-4 h-4 text-emerald-500" />
+              <span>Microphone & Audio Input Device</span>
+            </div>
+            <button
+              type="button"
+              onClick={openMicSettings}
+              className="px-2.5 py-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors"
+            >
+              Configure in Chrome
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              Web Speech API uses the default microphone configured in your browser and macOS system sound settings.
+            </p>
+
+            {/* Apple Continuity Microphone Notice */}
+            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-200 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-semibold">
+                <Smartphone className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span>Connecting to your iPhone instead of Mac?</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-amber-800 dark:text-amber-300">
+                macOS automatically routes microphone audio to your iPhone via <strong>Apple Continuity Camera</strong> when nearby. To use your Mac's built-in microphone instead:
+              </p>
+              <ul className="text-[11px] list-disc list-inside space-y-1.5 text-amber-800 dark:text-amber-300 pt-0.5">
+                <li>
+                  <strong>In Chrome:</strong> Click <button type="button" onClick={openMicSettings} className="underline font-semibold hover:text-amber-900">Chrome Mic Settings</button> and select <em>MacBook Built-in Microphone</em> instead of <em>Default</em>.
+                </li>
+                <li>
+                  <strong>In macOS:</strong> Open <em>System Settings &gt; Sound &gt; Input</em> and select your <em>MacBook Microphone</em>.
+                </li>
+                <li>
+                  <strong>On iPhone:</strong> Go to <em>Settings &gt; General &gt; AirPlay &amp; Continuity</em> and toggle off <em>Continuity Camera</em>.
+                </li>
+              </ul>
+            </div>
+
+            {audioDevices.length > 0 && (
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Detected Input Microphones ({audioDevices.length})
+                </span>
+                <div className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs">
+                  {audioDevices.map((dev, idx) => {
+                    const isIphone = dev.label.toLowerCase().includes('iphone');
+                    return (
+                      <div key={dev.deviceId || idx} className="p-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {isIphone ? (
+                            <Smartphone className="w-3.5 h-3.5 text-amber-500" />
+                          ) : (
+                            <Laptop className="w-3.5 h-3.5 text-emerald-500" />
+                          )}
+                          <span className="font-medium text-slate-800 dark:text-slate-200">
+                            {dev.label || `Microphone ${idx + 1}`}
+                          </span>
+                        </div>
+                        {isIphone && (
+                          <span className="text-[10px] bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-semibold">
+                            Continuity Device
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

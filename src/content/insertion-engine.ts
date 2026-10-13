@@ -34,7 +34,7 @@ export class TextInsertionEngine {
   // Deduplication cache to prevent duplicate insertion
   private lastInsertionText = '';
   private lastInsertionTimestamp = 0;
-  private readonly DEDUP_WINDOW_MS = 250;
+  private readonly DEDUP_WINDOW_MS = 800;
 
   // Undo history stack
   private undoStack: UndoHistoryRecord[] = [];
@@ -59,9 +59,11 @@ export class TextInsertionEngine {
 
     // Deduplication safeguard: ignore rapid accidental identical insertions (unless explicitly bypassed)
     const now = Date.now();
+    const cleanCurrent = rawText.trim().toLowerCase();
+    const cleanLast = this.lastInsertionText.trim().toLowerCase();
     if (
       !options.bypassDedup &&
-      this.lastInsertionText === rawText &&
+      cleanCurrent === cleanLast &&
       now - this.lastInsertionTimestamp < this.DEDUP_WINDOW_MS
     ) {
       return {
